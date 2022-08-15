@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "1093944591750",
+    "project_id": "pleebula",
+    "storage_bucket": "pleebula.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1093944591750:android:3e0c911052edff89799807",
+        "android_client_info": {
+          "package_name": "com.sleepybee.pleebula"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1093944591750-nmiem36q36ocgkst56mtorslqquk1u9u.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBkhcQ9Mkxf6E0rygIyD1N4SpRJ_VyVZmo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1093944591750-nmiem36q36ocgkst56mtorslqquk1u9u.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1093944591750:android:bb9b55d416cc606e799807",
+        "android_client_info": {
+          "package_name": "com.sleepybee.singpli"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1093944591750-nmiem36q36ocgkst56mtorslqquk1u9u.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBkhcQ9Mkxf6E0rygIyD1N4SpRJ_VyVZmo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1093944591750-nmiem36q36ocgkst56mtorslqquk1u9u.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

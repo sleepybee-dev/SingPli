@@ -1,10 +1,7 @@
 package com.sleepybee.singpli.item
 
 import androidx.room.*
-import com.google.gson.JsonObject
-import com.sleepybee.singpli.database.DateConverter
 import java.io.Serializable
-import java.time.LocalDateTime
 
 /**
  * Created by leeseulbee on 2022/08/01.

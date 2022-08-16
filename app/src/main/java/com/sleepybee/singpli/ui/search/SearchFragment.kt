@@ -38,6 +38,7 @@ class SearchFragment : Fragment() {
     private var _binding: FragmentSearchBinding? = null
     private val binding get() = _binding!!
     private val snippetListAdapter = SnippetListAdapter()
+    private val recentListAdapter = RecentListAdapter()
 
     private var searchViewModel: SearchViewModel? = null
     private var keyword = ""
@@ -54,6 +55,7 @@ class SearchFragment : Fragment() {
         val root: View = binding.root
 
         binding.rvSearch.adapter = snippetListAdapter
+        binding.includeEmptySearch.rvRecentSearchEmpty.adapter = recentListAdapter
 
         binding.btnDeleteSearch.visibility = if (keyword.isEmpty()) View.GONE else View.VISIBLE
         binding.btnDeleteSearch.setOnClickListener {
@@ -100,10 +102,8 @@ class SearchFragment : Fragment() {
                 binding.includeEmptySearch.tvRecentSearchEmpty.visibility = View.GONE
             } else {
                 binding.includeEmptySearch.tvRecentSearchEmpty.visibility = View.VISIBLE
-                val recentListAdapter = RecentListAdapter()
                 Timber.d("recent : %s", it.toString())
                 recentListAdapter.setSnippetList(it)
-                binding.includeEmptySearch.rvRecentSearchEmpty.adapter = recentListAdapter
             }
         })
 

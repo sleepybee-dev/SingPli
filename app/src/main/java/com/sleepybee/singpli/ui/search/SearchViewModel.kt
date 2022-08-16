@@ -11,7 +11,6 @@ import com.sleepybee.singpli.database.SnippetRepository
 import com.sleepybee.singpli.item.SnippetItem
 import com.sleepybee.singpli.item.SnippetWithSongs
 import com.sleepybee.singpli.item.SongItem
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -77,11 +76,5 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
     fun clearSearchSnippets() {
         searchSnippetJsonObject.postValue(null)
     }
-
-//    fun getKeywords(): LiveData<List<String>> {
-//        FirebaseFirestore.getInstance().collection("keyword").orderBy("countSearch")
-//            .limit(10).get()
-//
-//    }
 
 }

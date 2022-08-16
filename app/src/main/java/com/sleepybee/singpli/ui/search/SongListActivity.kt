@@ -171,11 +171,6 @@ class SongListActivity : AppCompatActivity() {
                                 }
                             }
                         }
-//                    if (!elem.isEmpty()) {
-//                        val titles = elem.toString()
-//                        binding.tvSongList.text = titles
-//                        Log.d("sblee", titles)
-//                    }
                     }
                 } else {
                     withContext(Main) {

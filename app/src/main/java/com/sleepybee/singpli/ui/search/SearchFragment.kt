@@ -36,18 +36,11 @@ import timber.log.Timber
 class SearchFragment : Fragment() {
 
     private var _binding: FragmentSearchBinding? = null
-
-    // This property is only valid between onCreateView and
-    // onDestroyView.
     private val binding get() = _binding!!
     private val snippetListAdapter = SnippetListAdapter()
 
     private var searchViewModel: SearchViewModel? = null
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-    }
+    private var keyword = ""
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -62,6 +55,7 @@ class SearchFragment : Fragment() {
 
         binding.rvSearch.adapter = snippetListAdapter
 
+        binding.btnDeleteSearch.visibility = if (keyword.isEmpty()) View.GONE else View.VISIBLE
         binding.btnDeleteSearch.setOnClickListener {
             clearKeyword()
         }
@@ -75,33 +69,33 @@ class SearchFragment : Fragment() {
         }
         binding.btnSearch.setOnClickListener {
             hideKeyboard(it)
-            searchVideo(binding.etSearch.text.toString())
+            keyword = binding.etSearch.text.toString()
+            searchVideo(keyword)
         }
-
 
         requireActivity().onBackPressedDispatcher.addCallback {
             if (binding.rvSearch.visibility == View.VISIBLE) {
                 clearKeyword()
             } else {
-                requireActivity().onBackPressed()
+               activity?.onBackPressed()
             }
         }
         return root
     }
 
     private fun clearKeyword() {
+        keyword = ""
         binding.etSearch.setText("")
         binding.btnDeleteSearch.visibility = View.GONE
-        binding.rvSearch.visibility = View.GONE
-        binding.rvSearch.removeAllViewsInLayout()
         binding.includeEmptySearch.root.visibility = View.VISIBLE
+        binding.rvSearch.visibility = View.GONE
+        searchViewModel?.clearSearchSnippets()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         searchViewModel?.getRecentSnippets()?.observe(viewLifecycleOwner, Observer {
-
             if (it.isEmpty()) {
                 binding.includeEmptySearch.tvRecentSearchEmpty.visibility = View.GONE
             } else {
@@ -116,11 +110,12 @@ class SearchFragment : Fragment() {
         val chipGroup = binding.includeEmptySearch.chipGroupSearchEmpty
         val inflater = LayoutInflater.from(chipGroup.context)
 
-        searchViewModel?.getRecommendationKeywordList()?.map { keyword ->
+        searchViewModel?.getRecommendationKeywordList()?.map { chipKeyword ->
             val chip = inflater.inflate(R.layout.chip_keyword, chipGroup, false) as Chip
-            chip.text = keyword
+            chip.text = chipKeyword
             chip.setOnClickListener {
-                val keywordNew = "$keyword 플리"
+                val keywordNew = "$chipKeyword 플리"
+                this.keyword = keywordNew
                 binding.etSearch.setText(keywordNew)
                 searchVideo(keywordNew)
                 hideKeyboard(view)
@@ -131,6 +126,16 @@ class SearchFragment : Fragment() {
 
             for (chip in it) {
                 chipGroup.addView(chip)
+            }
+        }
+
+        searchViewModel?.getSearchSnippetJsonObject()?.observe(viewLifecycleOwner) {
+            it?.let {
+                binding.shimmerSearch.stopShimmer()
+                binding.shimmerSearch.visibility = View.GONE
+                binding.includeEmptySearch.root.visibility = View.GONE
+                binding.rvSearch.visibility = View.VISIBLE
+                parseSongMeta(it)
             }
         }
     }
@@ -153,43 +158,7 @@ class SearchFragment : Fragment() {
         binding.shimmerSearch.visibility = View.VISIBLE
         binding.shimmerSearch.startShimmer()
 
-        CoroutineScope(Dispatchers.IO).launch {
-            val retrofit = Retrofit.Builder()
-                .baseUrl("https://www.googleapis.com/")
-                .addConverterFactory(GsonConverterFactory.create())
-                .build()
-
-            val ytService = retrofit.create(YTService::class.java)
-
-            ytService.searchVideos(
-                apiKey = getString(R.string.YOUTUBE_API_KEY),
-                videoPart = "snippet",
-                type = "video",
-                maxResults = 20,
-                q = keyword)
-                .enqueue(object : Callback<JsonObject> {
-                    override fun onResponse(
-                        call: Call<JsonObject>,
-                        response: Response<JsonObject>
-                    ) {
-                        if (response.isSuccessful) {
-                            CoroutineScope(Dispatchers.Main).launch {
-                                binding.shimmerSearch.stopShimmer()
-                                binding.shimmerSearch.visibility = View.GONE
-                                binding.rvSearch.visibility = View.VISIBLE
-                            }
-                            response.body()?.let {
-                                parseSongMeta(it)
-                            }
-                        }
-                    }
-
-                    override fun onFailure(call: Call<JsonObject>, t: Throwable) {
-                        TODO("Not yet implemented")
-                    }
-
-                })
-        }
+        searchViewModel?.searchVideoSnippets(keyword)
     }
 
     private fun parseSongMeta(responseBody: JsonObject) {
@@ -198,11 +167,11 @@ class SearchFragment : Fragment() {
                 val snippets: ArrayList<SnippetItem> = arrayListOf()
                 for (i in 0 until items.size()) {
                     items.get(i).asJsonObject?.let { item ->
-                        Log.d("SB", "item : $item");
+                        Timber.d("item : $item");
                         val videoId = item.getAsJsonObject("id")
                             .get("videoId").asString
                         val snippet = item.getAsJsonObject("snippet")
-                        Log.d("sblee", "snippet : $snippet")
+                        Timber.d("snippet : $snippet")
                         snippets.add(
                             SnippetItem(
                                 videoId,
@@ -227,12 +196,6 @@ class SearchFragment : Fragment() {
         } catch (e: Exception) {
             Timber.d("error : " +e.message)
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        binding.etSearch.setText("")
-        binding.btnDeleteSearch.visibility = View.GONE
     }
 
     override fun onDestroyView() {

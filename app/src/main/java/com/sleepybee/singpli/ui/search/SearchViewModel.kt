@@ -55,6 +55,9 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                     val response = repository.searchVideoSnippets(keyword).execute()
                     if (response.isSuccessful) {
                         searchSnippetJsonObject.postValue(response.body())
+                    } else {
+                        Timber.d(response.errorBody().toString())
+                        searchSnippetJsonObject.postValue(null)
                     }
                 } catch (e: Exception) {
                     Timber.d(e)
@@ -65,6 +68,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
     fun getSearchSnippetJsonObject(): LiveData<JsonObject?> {
         return searchSnippetJsonObject
     }
+
     fun getRecentSnippets(): LiveData<List<SnippetWithSongs>>? {
         return recentSnippets
     }

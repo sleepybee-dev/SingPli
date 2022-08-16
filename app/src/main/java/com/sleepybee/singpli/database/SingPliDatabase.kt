@@ -5,7 +5,6 @@ import androidx.room.*
 import com.sleepybee.singpli.item.*
 
 @Database(entities = [SnippetItem::class, SongItem::class], version = 1, exportSchema = false)
-@TypeConverters(DateConverter::class)
 abstract class SingPliDatabase : RoomDatabase() {
     abstract fun snippetDao() : SnippetDao
 

@@ -1,5 +1,5 @@
 <resources>
-    <string name="YOUTUBE_API_KEY">AIzaSyDtzLudHKZFIC3Xrz8J4943gNI5MTL_j90</string>
+    <string name="YOUTUBE_API_KEY"></string>
     <string name="app_name">플리불러</string>
     <string name="title_rank">플리 랭킹</string>
     <string name="title_search">플리 검색</string>

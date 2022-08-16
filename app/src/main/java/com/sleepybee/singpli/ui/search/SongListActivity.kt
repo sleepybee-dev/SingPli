@@ -27,6 +27,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import org.jsoup.Jsoup
 import org.jsoup.select.Elements
+import timber.log.Timber
 import java.net.URLEncoder
 import java.time.LocalDateTime
 import java.util.*
@@ -104,7 +105,9 @@ class SongListActivity : AppCompatActivity() {
                 val doc = Jsoup.connect(videoUrl).get()
 
                 val elems = doc.select("script")
-                if (elems.toString().contains("ytInitialData") && elems.toString().contains("carouselLockups")) {
+                if (elems.toString().contains("ytInitialData") && elems.toString()
+                        .contains("carouselLockups")
+                ) {
                     elems.reverse()
                     for (scriptElem in elems) {
                         if (scriptElem.data().contains("ytInitialData") && scriptElem.data()
@@ -125,7 +128,7 @@ class SongListActivity : AppCompatActivity() {
                                         .getJSONObject("compactVideoRenderer")
                                         .getJSONObject("title")
 
-                                    val title = if (titleObject.toString().contains("simpleText")) {
+                                    var title = if (titleObject.toString().contains("simpleText")) {
                                         titleObject.getString("simpleText")
                                     } else {
                                         titleObject.getJSONArray("runs")
@@ -153,7 +156,15 @@ class SongListActivity : AppCompatActivity() {
                                             .getJSONObject("expandedMetadata")["simpleText"] as String
                                     }
 
-                                    Log.d("sblee", "title : $title/$artist / $license")
+                                    Timber.d("search : $artist / $title")
+
+                                    val regEx = "\\(.*?\\)".toRegex()
+                                    regEx.find(title)?.let { matchResult ->
+                                        title = title.replace(matchResult.value, "").trim()
+                                    }
+
+                                    Timber.d("search2 : $artist / $title")
+
                                     if (license.lowercase(Locale.getDefault()).contains("japan")) {
                                         searchWithJapanese(title, artist)
                                     } else {
@@ -176,184 +187,183 @@ class SongListActivity : AppCompatActivity() {
                     withContext(Main) {
                         binding.progressSongList.visibility = View.GONE
                         binding.btnHeartSongList.visibility = View.VISIBLE
-                        Toast.makeText(this@SongListActivity, "음악 정보가 포함되지 않은 비디오입니다.", Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            this@SongListActivity,
+                            "음악 정보가 포함되지 않은 비디오입니다.",
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
-}
+    }
 
-private fun updateRecentSnippet(snippetItem: SnippetItem, songList: List<SongItem>) {
-    val today = LocalDateTime.now()
-    snippetItem.viewDate = today.toString()
-    searchViewModel?.insertRecentSnippet(snippetItem)
-    searchViewModel?.insertSongs(songList)
-}
+    private fun updateRecentSnippet(snippetItem: SnippetItem, songList: List<SongItem>) {
+        val today = LocalDateTime.now()
+        snippetItem.viewDate = today.toString()
+        searchViewModel?.insertRecentSnippet(snippetItem)
+        searchViewModel?.insertSongs(songList)
+    }
 
-private fun initSnippetView(snippetItem: SnippetItem) {
-    with(snippetItem) {
-        binding.tvTitleSongList.text = title
-        binding.tvChannelDateSongList.text = "$channelTitle | ${publishedAt.split("T")[0]}"
-        Glide.with(binding.root.context)
-            .load(thumbnail)
-            .centerCrop()
-            .into(binding.ivThumbnailSongList)
-        binding.btnHeartSongList.setBackgroundResource(if (isHearted) R.drawable.ic_on_smallheart else R.drawable.ic_off_smallheart)
+    private fun initSnippetView(snippetItem: SnippetItem) {
+        with(snippetItem) {
+            binding.tvTitleSongList.text = title
+            binding.tvChannelDateSongList.text = "$channelTitle | ${publishedAt.split("T")[0]}"
+            Glide.with(binding.root.context)
+                .load(thumbnail)
+                .centerCrop()
+                .into(binding.ivThumbnailSongList)
+            binding.btnHeartSongList.setBackgroundResource(if (isHearted) R.drawable.ic_on_smallheart else R.drawable.ic_off_smallheart)
+
+            binding.btnYoutubeSongList.setOnClickListener {
+                val videoUrl = "https://www.youtube.com/watch?v=${videoId}"
+                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(videoUrl))
+                binding.root.context.startActivity(browserIntent)
+            }
+        }
 
         binding.btnYoutubeSongList.setOnClickListener {
-            val videoUrl = "https://www.youtube.com/watch?v=${videoId}"
             val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(videoUrl))
-            binding.root.context.startActivity(browserIntent)
+            startActivity(browserIntent)
         }
     }
 
-    binding.btnYoutubeSongList.setOnClickListener {
-        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(videoUrl))
-        startActivity(browserIntent)
-    }
-}
+    private fun searchSongNumber(originTitle: String, originArtist: String) {
+        var title = originTitle.lowercase()
+        var artist = originArtist.lowercase()
 
-private fun searchSongNumber(originTitle: String, originArtist: String) {
-    var title = originTitle.lowercase()
-    var artist = originArtist.lowercase()
+        if (PLBLApplication.artistTransData.containsKey(artist) && PLBLApplication.artistTransData[artist] != null) {
+            artist = PLBLApplication.artistTransData[artist]!!
+        }
+        if (PLBLApplication.titleTransData.containsKey(title) && PLBLApplication.titleTransData[title] != null) {
+            title = PLBLApplication.titleTransData[title]!!
+        }
 
-    if (PLBLApplication.artistTransData.containsKey(artist) && PLBLApplication.artistTransData[artist] != null) {
-        artist = PLBLApplication.artistTransData[artist]!!
-    }
-    if (PLBLApplication.titleTransData.containsKey(title) && PLBLApplication.titleTransData[title] != null) {
-        title = PLBLApplication.titleTransData[title]!!
-    }
+        artist = URLEncoder.encode(artist, "US-ASCII")
+        title = URLEncoder.encode(title, "US-ASCII")
 
-//    val regEx = "₩([^)]*₩)".toRegex()
-//    regEx.find(title)?.let { matchResult ->
-//        title = title.replace(matchResult.value, "")
-//    }
-
-    artist = URLEncoder.encode(artist, "US-ASCII")
-    title = URLEncoder.encode(title, "US-ASCII")
-
-    val doc =
-        Jsoup.connect("https://m.search.naver.com/search.naver?sm=mtp_hty.top&where=m&query=$artist+%2F+$title+노래방+노래검색")
-            .get()
-    val searchElems: Elements =
-        doc.select("div#container div#ct")[0].getElementsByClass("singroom_card_sub")
-    if (!searchElems.isNullOrEmpty()) {
-        val tableElems = searchElems[0].select("table")[0].select("tbody tr")
-        Log.d("SB", "table Elems : " + tableElems.size)
-        val maxElemCount = if (tableElems.size > 5) 5 else tableElems.size
-        val searchResults: ArrayList<KaraokeItem> = arrayListOf()
-        for (i in 0 until maxElemCount) {
-            val elems = tableElems[i].select("td")
-            val searchTitles = elems[0].text().split("/")
-            val number = elems[1].text().toInt()
-            val brand = elems[2].text()
-            val searchResult = "[$brand] $searchTitles - $number"
-            Log.d("sblee", "search : $searchResult")
-            val karaokeItem = KaraokeItem(
-                brand = brand,
-                number = number,
-                title = searchTitles[0].trim(),
-                artist = searchTitles[1].trim()
+        val doc =
+            Jsoup.connect("https://m.search.naver.com/search.naver?sm=mtp_hty.top&where=m&query=$artist+%2F+$title+노래방+노래검색")
+                .get()
+        val searchElems: Elements =
+            doc.select("div#container div#ct")[0].getElementsByClass("singroom_card_sub")
+        if (!searchElems.isNullOrEmpty()) {
+            val tableElems = searchElems[0].select("table")[0].select("tbody tr")
+            Log.d("SB", "table Elems : " + tableElems.size)
+            val maxElemCount = if (tableElems.size > 5) 5 else tableElems.size
+            val searchResults: ArrayList<KaraokeItem> = arrayListOf()
+            for (i in 0 until maxElemCount) {
+                val elems = tableElems[i].select("td")
+                val searchTitles = elems[0].text().split("/")
+                val number = elems[1].text().toInt()
+                val brand = elems[2].text()
+                val searchResult = "[$brand] $searchTitles - $number"
+                Log.d("sblee", "search : $searchResult")
+                val karaokeItem = KaraokeItem(
+                    brand = brand,
+                    number = number,
+                    title = searchTitles[0].trim(),
+                    artist = searchTitles[1].trim()
+                )
+                searchResults.add(karaokeItem)
+            }
+            val songItem = SongItem(
+                songId = null,
+                videoId = snippetItem.videoId,
+                title = originTitle,
+                artist = originArtist,
+                karaokeList = Gson().toJson(searchResults)
             )
-            searchResults.add(karaokeItem)
-        }
-        val songItem = SongItem(
-            songId = null,
-            videoId = snippetItem.videoId,
-            title = originTitle,
-            artist = originArtist,
-            karaokeList = Gson().toJson(searchResults)
-        )
 
-        addSong(songItem)
+            addSong(songItem)
 
-    } else {
-        searchWithJapanese(originTitle, originArtist)
-    }
-}
-
-private fun addSong(songItem: SongItem) {
-    CoroutineScope(Dispatchers.Main).launch {
-        songList.add(songItem)
-        songListAdapter.addSong(songItem)
-    }
-}
-
-private fun searchWithJapanese(title: String, artist: String) {
-    // 제목이 훈독 히라가나 일본곡인지 한번 더 돌아본다
-    val generalDoc =
-        Jsoup.connect("https://m.search.naver.com/search.naver?sm=mtp_hty.top&where=m_view&query=$artist+$title")
-            .get()
-
-    val generalElems = generalDoc.getElementsByClass("api_txt_lines total_tit _cross_trigger")
-    var japaneseWord = ""
-    for (i in 0..10) {
-        if (i >= generalElems.size) break
-        val elem = generalDoc.getElementsByClass("api_txt_lines total_tit _cross_trigger")[i]
-
-        Log.d("sblee", "additional search : " + elem.text())
-        japaneseWord = getJapanese(elem.text())
-        if (japaneseWord.isNotEmpty()) {
-            break
+        } else {
+            searchWithJapanese(originTitle, originArtist)
         }
     }
 
-    if (japaneseWord.isEmpty()) return
+    private fun addSong(songItem: SongItem) {
+        CoroutineScope(Dispatchers.Main).launch {
+            songList.add(songItem)
+            songListAdapter.addSong(songItem)
+        }
+    }
 
-    Log.d("sblee", "additional search : $japaneseWord")
+    private fun searchWithJapanese(title: String, artist: String) {
+        // 제목이 훈독 히라가나 일본곡인지 한번 더 돌아본다
+        val generalDoc =
+            Jsoup.connect("https://m.search.naver.com/search.naver?sm=mtp_hty.top&where=m_view&query=$artist+$title")
+                .get()
 
-    japaneseWord = URLEncoder.encode(japaneseWord, "US-ASCII")
-    val songDoc =
-        Jsoup.connect("https://m.search.naver.com/search.naver?sm=mtp_hty.top&where=m&query=$japaneseWord+$artist+%2F+$title+노래방+노래검색")
-            .get()
-    val searchElems: Elements =
-        songDoc.select("div#container div#ct")[0].getElementsByClass("singroom_card_sub")
-    if (!searchElems.isNullOrEmpty()) {
-        val tableElems = searchElems[0].select("table")[0].select("tbody tr")
-        // 상위 세개 긁어오기
-        val searchResults: ArrayList<KaraokeItem> = arrayListOf()
-        for (i in 0 until 2) {
-            val elems = tableElems[i].select("td")
-            val searchTitles = elems[0].text().split("/")
-            val number = elems[1].text().toInt()
-            val brand = elems[2].text()
-            val searchResult = "[$brand] $searchTitles - $number"
-            val karaokeItem = KaraokeItem(
-                brand = brand,
-                number = number,
-                title = searchTitles[0].trim(),
-                artist = searchTitles[1].trim()
+        val generalElems = generalDoc.getElementsByClass("api_txt_lines total_tit _cross_trigger")
+        var japaneseWord = ""
+        for (i in 0..10) {
+            if (i >= generalElems.size) break
+            val elem = generalDoc.getElementsByClass("api_txt_lines total_tit _cross_trigger")[i]
+
+            Log.d("sblee", "additional search : " + elem.text())
+            japaneseWord = getJapanese(elem.text())
+            if (japaneseWord.isNotEmpty()) {
+                break
+            }
+        }
+
+        if (japaneseWord.isEmpty()) return
+
+        Log.d("sblee", "additional search : $japaneseWord")
+
+        japaneseWord = URLEncoder.encode(japaneseWord, "US-ASCII")
+        val songDoc =
+            Jsoup.connect("https://m.search.naver.com/search.naver?sm=mtp_hty.top&where=m&query=$japaneseWord+$artist+%2F+$title+노래방+노래검색")
+                .get()
+        val searchElems: Elements =
+            songDoc.select("div#container div#ct")[0].getElementsByClass("singroom_card_sub")
+        if (!searchElems.isNullOrEmpty()) {
+            val tableElems = searchElems[0].select("table")[0].select("tbody tr")
+            // 상위 세개 긁어오기
+            val searchResults: ArrayList<KaraokeItem> = arrayListOf()
+            for (i in 0 until 2) {
+                val elems = tableElems[i].select("td")
+                val searchTitles = elems[0].text().split("/")
+                val number = elems[1].text().toInt()
+                val brand = elems[2].text()
+                val searchResult = "[$brand] $searchTitles - $number"
+                val karaokeItem = KaraokeItem(
+                    brand = brand,
+                    number = number,
+                    title = searchTitles[0].trim(),
+                    artist = searchTitles[1].trim()
+                )
+                searchResults.add(karaokeItem)
+
+                Log.d("sblee", "additional search : $searchResult")
+            }
+            val songItem = SongItem(
+                songId = null,
+                videoId = snippetItem.videoId,
+                title = title,
+                artist = artist,
+                karaokeList = Gson().toJson(searchResults)
             )
-            searchResults.add(karaokeItem)
-
-            Log.d("sblee", "additional search : $searchResult")
-        }
-        val songItem = SongItem(
-            songId = null,
-            videoId = snippetItem.videoId,
-            title = title,
-            artist = artist,
-            karaokeList = Gson().toJson(searchResults)
-        )
-        addSong(songItem)
-    }
-}
-
-private fun getJapanese(elemText: String): String {
-    var resultJapanese = ""
-    for (i in elemText.indices) {
-        if (isJapanese(elemText[i])) {
-            resultJapanese += elemText[i]
+            addSong(songItem)
         }
     }
-    return resultJapanese
-}
 
-private fun isJapanese(char: Char): Boolean {
-    return char in '\u4E00'..'\u9FFF' || char in '\u3040'..'\u309F' || char in '\u30A0'..'\u30FF'
-}
+    private fun getJapanese(elemText: String): String {
+        var resultJapanese = ""
+        for (i in elemText.indices) {
+            if (isJapanese(elemText[i])) {
+                resultJapanese += elemText[i]
+            }
+        }
+        return resultJapanese
+    }
+
+    private fun isJapanese(char: Char): Boolean {
+        return char in '\u4E00'..'\u9FFF' || char in '\u3040'..'\u309F' || char in '\u30A0'..'\u30FF'
+    }
 
 }
 

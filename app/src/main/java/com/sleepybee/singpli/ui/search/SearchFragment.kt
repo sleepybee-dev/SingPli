@@ -90,8 +90,9 @@ class SearchFragment : Fragment() {
         binding.etSearch.setText("")
         binding.btnDeleteSearch.visibility = View.GONE
         binding.includeEmptySearch.root.visibility = View.VISIBLE
-        binding.rvSearch.visibility = View.GONE
+        binding.rvSearch.removeAllViewsInLayout()
         searchViewModel?.clearSearchSnippets()
+        binding.rvSearch.visibility = View.GONE
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -130,11 +131,11 @@ class SearchFragment : Fragment() {
         }
 
         searchViewModel?.getSearchSnippetJsonObject()?.observe(viewLifecycleOwner) {
-            it?.let {
-                binding.shimmerSearch.stopShimmer()
-                binding.shimmerSearch.visibility = View.GONE
-                binding.includeEmptySearch.root.visibility = View.GONE
-                binding.rvSearch.visibility = View.VISIBLE
+            binding.shimmerSearch.stopShimmer()
+            binding.shimmerSearch.visibility = View.GONE
+            binding.includeEmptySearch.root.visibility = View.GONE
+            binding.rvSearch.visibility = View.VISIBLE
+            it?.let{
                 parseSongMeta(it)
             }
         }

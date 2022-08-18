@@ -133,9 +133,12 @@ class SearchFragment : Fragment() {
         searchViewModel?.getSearchSnippetJsonObject()?.observe(viewLifecycleOwner) {
             binding.shimmerSearch.stopShimmer()
             binding.shimmerSearch.visibility = View.GONE
-            binding.includeEmptySearch.root.visibility = View.GONE
-            binding.rvSearch.visibility = View.VISIBLE
-            it?.let{
+            if (it == null) {
+                binding.includeEmptySearch.root.visibility = View.VISIBLE
+                binding.rvSearch.visibility = View.GONE
+            } else {
+                binding.includeEmptySearch.root.visibility = View.GONE
+                binding.rvSearch.visibility = View.VISIBLE
                 parseSongMeta(it)
             }
         }
@@ -168,11 +171,9 @@ class SearchFragment : Fragment() {
                 val snippets: ArrayList<SnippetItem> = arrayListOf()
                 for (i in 0 until items.size()) {
                     items.get(i).asJsonObject?.let { item ->
-                        Timber.d("item : $item");
                         val videoId = item.getAsJsonObject("id")
                             .get("videoId").asString
                         val snippet = item.getAsJsonObject("snippet")
-                        Timber.d("snippet : $snippet")
                         snippets.add(
                             SnippetItem(
                                 videoId,

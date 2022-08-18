@@ -28,7 +28,6 @@ import org.json.JSONObject
 import org.jsoup.Jsoup
 import org.jsoup.select.Elements
 import timber.log.Timber
-import java.net.URLEncoder
 import java.time.LocalDateTime
 import java.util.*
 
@@ -141,7 +140,7 @@ class SongListActivity : AppCompatActivity() {
                                         infoObject.getJSONObject(0).getJSONObject("infoRowRenderer")
                                             .getJSONObject("defaultMetadata")
 
-                                    val artist =
+                                    var artist =
                                         if (artistObject.toString().contains("simpleText")) {
                                             artistObject.getString("simpleText")
                                         } else {
@@ -158,10 +157,17 @@ class SongListActivity : AppCompatActivity() {
 
                                     Timber.d("search : $artist / $title")
 
+                                    // 괄호 거르기
                                     val regEx = "\\(.*?\\)".toRegex()
-                                    regEx.find(title)?.let { matchResult ->
-                                        title = title.replace(matchResult.value, "").trim()
-                                    }
+                                    title = regEx.replace(title, "")
+
+                                    // 특문 거르기
+//                                    val regEx2 = "[^A-Za-z0-9]".toRegex()
+//                                    title = regEx2.replace(title, "")
+//                                    artist = regEx2.replace(artist, "")
+
+                                    title = title.replace("\"", "")
+                                    artist = artist.replace("|", " ").replace("\"", "")
 
                                     Timber.d("search2 : $artist / $title")
 
@@ -241,9 +247,6 @@ class SongListActivity : AppCompatActivity() {
             title = PLBLApplication.titleTransData[title]!!
         }
 
-        artist = URLEncoder.encode(artist, "US-ASCII")
-        title = URLEncoder.encode(title, "US-ASCII")
-
         val doc =
             Jsoup.connect("https://m.search.naver.com/search.naver?sm=mtp_hty.top&where=m&query=$artist+%2F+$title+노래방+노래검색")
                 .get()
@@ -251,7 +254,6 @@ class SongListActivity : AppCompatActivity() {
             doc.select("div#container div#ct")[0].getElementsByClass("singroom_card_sub")
         if (!searchElems.isNullOrEmpty()) {
             val tableElems = searchElems[0].select("table")[0].select("tbody tr")
-            Log.d("SB", "table Elems : " + tableElems.size)
             val maxElemCount = if (tableElems.size > 5) 5 else tableElems.size
             val searchResults: ArrayList<KaraokeItem> = arrayListOf()
             for (i in 0 until maxElemCount) {
@@ -260,7 +262,6 @@ class SongListActivity : AppCompatActivity() {
                 val number = elems[1].text().toInt()
                 val brand = elems[2].text()
                 val searchResult = "[$brand] $searchTitles - $number"
-                Log.d("sblee", "search : $searchResult")
                 val karaokeItem = KaraokeItem(
                     brand = brand,
                     number = number,
@@ -314,9 +315,9 @@ class SongListActivity : AppCompatActivity() {
 
         Log.d("sblee", "additional search : $japaneseWord")
 
-        japaneseWord = URLEncoder.encode(japaneseWord, "US-ASCII")
+
         val songDoc =
-            Jsoup.connect("https://m.search.naver.com/search.naver?sm=mtp_hty.top&where=m&query=$japaneseWord+$artist+%2F+$title+노래방+노래검색")
+            Jsoup.connect("https://m.search.naver.com/search.naver?sm=mtp_hty.top&where=m&query=$japaneseWord+$artist+$title+노래방+노래검색")
                 .get()
         val searchElems: Elements =
             songDoc.select("div#container div#ct")[0].getElementsByClass("singroom_card_sub")

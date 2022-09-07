@@ -1,37 +1,31 @@
 package com.sleepybee.singpli.ui.search
 
-import android.annotation.SuppressLint
-import android.content.Context
 import android.content.Context.INPUT_METHOD_SERVICE
 import android.os.Bundle
-import android.util.Log
 import android.view.KeyEvent
 import android.view.KeyEvent.KEYCODE_ENTER
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.chip.Chip
 import com.google.gson.JsonObject
 import com.sleepybee.singpli.R
 import com.sleepybee.singpli.databinding.FragmentSearchBinding
 import com.sleepybee.singpli.item.SnippetItem
-import com.sleepybee.singpli.network.YTService
 import com.sleepybee.singpli.ui.adapter.RecentListAdapter
 import com.sleepybee.singpli.ui.adapter.SnippetListAdapter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import timber.log.Timber
+
 
 class SearchFragment : Fragment() {
 
@@ -42,13 +36,16 @@ class SearchFragment : Fragment() {
 
     private var searchViewModel: SearchViewModel? = null
     private var keyword = ""
+    private var nextPageToken: String? = null
+    private var isNew = true
+    private var isLoading = true
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        searchViewModel  =
+        searchViewModel =
             ViewModelProvider(this)[SearchViewModel::class.java]
 
         _binding = FragmentSearchBinding.inflate(inflater, container, false)
@@ -62,24 +59,35 @@ class SearchFragment : Fragment() {
             clearKeyword()
         }
 
+//        binding.rvSearch.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+//            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+//                super.onScrollStateChanged(recyclerView, newState)
+//                if (!isLoading && !recyclerView.canScrollVertically(1) && newState==RecyclerView.SCROLL_STATE_IDLE) {
+//                    isLoading = true
+//                    searchVideo(false, keyword)
+//                    Toast.makeText(activity, "CALL $keyword", Toast.LENGTH_SHORT).show()
+//                }
+//            }
+//        })
+
         binding.etSearch.setOnKeyListener { v, keyCode, event ->
             if (event.action == KeyEvent.ACTION_DOWN && keyCode == KEYCODE_ENTER) {
                 hideKeyboard(v)
-                searchVideo(binding.etSearch.text.toString())
+                searchVideo(true, binding.etSearch.text.toString())
             }
             true
         }
         binding.btnSearch.setOnClickListener {
             hideKeyboard(it)
             keyword = binding.etSearch.text.toString()
-            searchVideo(keyword)
+            searchVideo(true, keyword)
         }
 
         requireActivity().onBackPressedDispatcher.addCallback {
             if (binding.rvSearch.visibility == View.VISIBLE) {
                 clearKeyword()
             } else {
-               activity?.onBackPressed()
+                activity?.onBackPressed()
             }
         }
         return root
@@ -87,11 +95,12 @@ class SearchFragment : Fragment() {
 
     private fun clearKeyword() {
         keyword = ""
+        nextPageToken = null
         binding.etSearch.setText("")
         binding.btnDeleteSearch.visibility = View.GONE
         binding.includeEmptySearch.root.visibility = View.VISIBLE
-        binding.rvSearch.removeAllViewsInLayout()
         searchViewModel?.clearSearchSnippets()
+        binding.rvSearch.removeAllViewsInLayout()
         binding.rvSearch.visibility = View.GONE
     }
 
@@ -116,9 +125,8 @@ class SearchFragment : Fragment() {
             chip.text = chipKeyword
             chip.setOnClickListener {
                 val keywordNew = "$chipKeyword 플리"
-                this.keyword = keywordNew
                 binding.etSearch.setText(keywordNew)
-                searchVideo(keywordNew)
+                searchVideo(true, keywordNew)
                 hideKeyboard(view)
             }
             chip
@@ -151,22 +159,25 @@ class SearchFragment : Fragment() {
         }
     }
 
-    private fun searchVideo(keyword: String) {
+    private fun searchVideo(isNew: Boolean, keyword: String) {
         if (keyword.isEmpty()) {
             return
         }
+        this.isNew = isNew
+        this.keyword = keyword
         binding.btnDeleteSearch.visibility = View.VISIBLE
-
         binding.includeEmptySearch.root.visibility = View.GONE
-        binding.rvSearch.visibility = View.GONE
-        binding.shimmerSearch.visibility = View.VISIBLE
-        binding.shimmerSearch.startShimmer()
+        if (isNew) {
+            binding.shimmerSearch.visibility = View.VISIBLE
+            binding.shimmerSearch.startShimmer()
+        }
 
-        searchViewModel?.searchVideoSnippets(keyword)
+        searchViewModel?.searchVideoSnippets(keyword, nextPageToken)
     }
 
     private fun parseSongMeta(responseBody: JsonObject) {
         try {
+            nextPageToken = responseBody.get("nextPageToken").asString
             responseBody.getAsJsonArray("items")?.let { items ->
                 val snippets: ArrayList<SnippetItem> = arrayListOf()
                 for (i in 0 until items.size()) {
@@ -181,7 +192,9 @@ class SearchFragment : Fragment() {
                                 snippet.get("channelId").asString,
                                 snippet.get("title").asString,
                                 snippet.get("description").asString,
-                                snippet.get("thumbnails").asJsonObject.get("high").asJsonObject.get("url").asString,
+                                snippet.get("thumbnails").asJsonObject.get("high").asJsonObject.get(
+                                    "url"
+                                ).asString,
                                 snippet.get("channelTitle").asString,
                                 snippet.get("liveBroadcastContent").asString,
                                 snippet.get("publishTime").asString,
@@ -192,11 +205,12 @@ class SearchFragment : Fragment() {
                 }
 
                 CoroutineScope(Dispatchers.Main).launch {
-                    snippetListAdapter.setSnippetList(snippets)
+                    isLoading = false
+                    snippetListAdapter.addSnippets(isNew, snippets)
                 }
             }
         } catch (e: Exception) {
-            Timber.d("error : " +e.message)
+            Timber.d("error : " + e.message)
         }
     }
 

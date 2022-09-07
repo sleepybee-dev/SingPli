@@ -202,6 +202,10 @@ class SongListActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+                withContext(Main) {
+                    binding.progressSongList.visibility = View.GONE
+                    binding.btnHeartSongList.visibility = View.VISIBLE
+                }
             }
         }
     }

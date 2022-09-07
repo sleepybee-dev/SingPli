@@ -35,13 +35,14 @@ class SnippetRepository(application: Application) {
         ytApiKey = application.getString(R.string.YOUTUBE_API_KEY)
     }
 
-    suspend fun searchVideoSnippets(keyword: String) =
+    suspend fun searchVideoSnippets(keyword: String, nextPageToken: String?) =
         ytService.searchVideos(
             apiKey = ytApiKey,
             videoPart = "snippet",
             type = "video",
-            maxResults = 20,
-            q = keyword)
+            maxResults = 40,
+            q = keyword,
+            pageToken = nextPageToken)
 
     fun insertRecentSnippet(snippetItem: SnippetItem) {
         snippetDao.insertRecentSnippets(snippetItem)

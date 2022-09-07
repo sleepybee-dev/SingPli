@@ -17,6 +17,7 @@ interface YTService {
         @Query("part") videoPart: String,
         @Query("type") type: String,
         @Query("maxResults") maxResults: Int,
-        @Query("q") q: String
+        @Query("q") q: String,
+        @Query("pageToken") pageToken: String? = null
     ): Call<JsonObject>
 }

@@ -23,7 +23,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
     private val recentSnippets = repository.getRecentSnippets()
 
     private val recommendationKeyword =
-        listOf("노래방", "여름", "비 오는 날", "청량", "걸그룹", "감성힙합", "뮤지컬 영화", "애니")
+        listOf("노래방", "가을", "이별", "걸그룹", "남돌", "감성힙합", "뮤지컬 영화", "애니")
 
     private var searchSnippetJsonObject = MutableLiveData<JsonObject?>()
     private val ioDispatcher = Dispatchers.IO
@@ -48,11 +48,11 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
         repository.updateHeart(snippetItem)
     }
 
-    fun searchVideoSnippets(keyword: String) {
+    fun searchVideoSnippets(keyword: String, nextPageToken: String?) {
         viewModelScope.launch {
             withContext(ioDispatcher) {
                 try {
-                    val response = repository.searchVideoSnippets(keyword).execute()
+                    val response = repository.searchVideoSnippets(keyword, nextPageToken).execute()
                     if (response.isSuccessful) {
                         searchSnippetJsonObject.postValue(response.body())
                     } else {

@@ -21,12 +21,13 @@ import com.sleepybee.singpli.databinding.FragmentSearchBinding
 import com.sleepybee.singpli.item.SnippetItem
 import com.sleepybee.singpli.ui.adapter.RecentListAdapter
 import com.sleepybee.singpli.ui.adapter.SnippetListAdapter
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-
+@AndroidEntryPoint
 class SearchFragment : Fragment() {
 
     private var _binding: FragmentSearchBinding? = null
@@ -45,11 +46,11 @@ class SearchFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        searchViewModel =
-            ViewModelProvider(this)[SearchViewModel::class.java]
-
         _binding = FragmentSearchBinding.inflate(inflater, container, false)
         val root: View = binding.root
+
+        searchViewModel =
+            ViewModelProvider(this)[SearchViewModel::class.java]
 
         binding.rvSearch.adapter = snippetListAdapter
         binding.includeEmptySearch.rvRecentSearchEmpty.adapter = recentListAdapter

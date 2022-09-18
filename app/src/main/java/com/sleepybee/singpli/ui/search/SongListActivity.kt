@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.google.gson.Gson
+import com.google.gson.JsonArray
 import com.sleepybee.singpli.PLBLApplication
 import com.sleepybee.singpli.R
 import com.sleepybee.singpli.databinding.ActivitySongListBinding
@@ -18,6 +19,8 @@ import com.sleepybee.singpli.item.KaraokeItem
 import com.sleepybee.singpli.item.SnippetItem
 import com.sleepybee.singpli.item.SongItem
 import com.sleepybee.singpli.ui.adapter.SongListAdapter
+import com.sleepybee.singpli.utils.INTENT_KEY_SNIPPET
+import com.sleepybee.singpli.utils.INTENT_KEY_SONG_LIST
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.IO
@@ -53,10 +56,10 @@ class SongListActivity : AppCompatActivity() {
         searchViewModel =
             ViewModelProvider(this)[SearchViewModel::class.java]
 
-        snippetItem = intent.getSerializableExtra("snippet") as SnippetItem
-        intent.getSerializableExtra("songList")?.let {
+        snippetItem = intent.getSerializableExtra(INTENT_KEY_SNIPPET, SnippetItem::class.java) as SnippetItem
+        intent.getStringExtra(INTENT_KEY_SONG_LIST)?.let {
             songList =
-                ArrayList(Gson().fromJson(it as String, Array<SongItem>::class.java).toList())
+                ArrayList(Gson().fromJson(it, Array<SongItem>::class.java).toList())
         }
 
         videoUrl = "https://www.youtube.com/watch?v=${snippetItem.videoId}"

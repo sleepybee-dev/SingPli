@@ -20,6 +20,8 @@ import com.sleepybee.singpli.databinding.ItemRecentBinding
 import com.sleepybee.singpli.item.SnippetWithSongs
 import com.sleepybee.singpli.ui.custom.CropTransformation
 import com.sleepybee.singpli.ui.search.SongListActivity
+import com.sleepybee.singpli.utils.INTENT_KEY_SNIPPET
+import com.sleepybee.singpli.utils.INTENT_KEY_SONG_LIST
 import timber.log.Timber
 import java.net.URL
 
@@ -106,8 +108,8 @@ class RecentListViewHolder(private val binding: ItemRecentBinding) :
     private fun goSongListActivity(context: Context, snippetWithSongs: SnippetWithSongs) {
         val intent = Intent(context, SongListActivity::class.java)
         with(snippetWithSongs) {
-            intent.putExtra("snippet", snippet)
-            intent.putExtra("songList", Gson().toJson(songList))
+            intent.putExtra(INTENT_KEY_SNIPPET, snippet)
+            intent.putExtra(INTENT_KEY_SONG_LIST, Gson().toJson(songList))
             context.startActivity(intent)
         }
     }

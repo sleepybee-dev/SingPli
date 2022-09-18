@@ -8,7 +8,9 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.sleepybee.singpli.databinding.FragmentRankingBinding
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class RankingFragment : Fragment() {
 
     private var _binding: FragmentRankingBinding? = null

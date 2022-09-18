@@ -1,26 +1,24 @@
 package com.sleepybee.singpli.ui.search
 
-import android.app.Application
-import android.view.View
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.google.gson.JsonObject
-import com.sleepybee.singpli.database.SnippetRepository
+import com.sleepybee.singpli.database.YTSnippetRepository
 import com.sleepybee.singpli.item.SnippetItem
 import com.sleepybee.singpli.item.SnippetWithSongs
 import com.sleepybee.singpli.item.SongItem
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import javax.inject.Inject
 
-class SearchViewModel(application: Application) : AndroidViewModel(application) {
+@HiltViewModel
+class SearchViewModel @Inject constructor(
+    private val ytSnippetRepository: YTSnippetRepository
+) : ViewModel() {
 
-    private val repository = SnippetRepository(application)
-
-    private val recentSnippets = repository.getRecentSnippets()
+    private val recentSnippets = ytSnippetRepository.getRecentSnippets()
 
     private val recommendationKeyword =
         listOf("노래방", "가을", "이별", "걸그룹", "남돌", "감성힙합", "뮤지컬 영화", "애니")
@@ -31,7 +29,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
     fun insertRecentSnippet(snippetItem: SnippetItem) {
         viewModelScope.launch {
             withContext(ioDispatcher) {
-                repository.insertRecentSnippet(snippetItem)
+                ytSnippetRepository.insertRecentSnippet(snippetItem)
             }
         }
     }
@@ -39,20 +37,20 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
     fun insertSongs(songList: List<SongItem>) {
         viewModelScope.launch {
             withContext(ioDispatcher) {
-                repository.insertSongs(songList)
+                ytSnippetRepository.insertSongs(songList)
             }
         }
     }
 
     fun updateHeart(snippetItem: SnippetItem) {
-        repository.updateHeart(snippetItem)
+        ytSnippetRepository.updateHeart(snippetItem)
     }
 
     fun searchVideoSnippets(keyword: String, nextPageToken: String?) {
         viewModelScope.launch {
             withContext(ioDispatcher) {
                 try {
-                    val response = repository.searchVideoSnippets(keyword, nextPageToken).execute()
+                    val response = ytSnippetRepository.searchVideoSnippets(keyword, nextPageToken).execute()
                     if (response.isSuccessful) {
                         searchSnippetJsonObject.postValue(response.body())
                     } else {

@@ -6,11 +6,13 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.FirebaseFirestore
+import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
 
 /**
  * Created by leeseulbee on 2022/07/27.
  */
+@HiltAndroidApp
 class PLBLApplication : Application() {
     companion object {
         var artistTransData: MutableMap<String, String> = mutableMapOf()
@@ -36,7 +38,6 @@ class PLBLApplication : Application() {
                         snapshot.data!!.map { map ->
                             artistTransData.put(map.key, map.value as String)
                         }
-                        Log.d("sblee", "init : $artistTransData")
                     }
                 }
             }
@@ -49,7 +50,6 @@ class PLBLApplication : Application() {
                         snapshot.data!!.map { map ->
                             titleTransData.put(map.key, map.value as String)
                         }
-                        Log.d("sblee", "init : $titleTransData")
                     }
                 }
             }

@@ -1,8 +1,11 @@
 # 플리불러 - 플레이리스트 노래방 번호 추출 앱
 
+![screen_recording1](https://user-images.githubusercontent.com/88768221/193603521-0a736f65-a7b6-4eb6-a8b7-6b04836cbf7d.gif)
+![screen_recording2](https://user-images.githubusercontent.com/88768221/193603534-f2a35092-ed38-483e-ae54-158b3cccfb3e.gif)
 
 Concept
 ---
+
 
 -   <**플리불러**>는 유튜브 플레이리스트(이하 플리)에 있는 노래들을 노래방 번호로 뽑아낸다.
 -  검색한 플리를 노래방 정보와 함께 보관할 수 있다.

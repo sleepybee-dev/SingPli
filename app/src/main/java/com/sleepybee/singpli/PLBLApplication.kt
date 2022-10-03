@@ -1,8 +1,6 @@
 package com.sleepybee.singpli
 
 import android.app.Application
-import android.os.Build
-import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.FirebaseFirestore

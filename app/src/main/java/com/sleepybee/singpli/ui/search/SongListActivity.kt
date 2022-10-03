@@ -1,17 +1,13 @@
 package com.sleepybee.singpli.ui.search
 
 import android.content.Intent
-import android.graphics.LightingColorFilter
 import android.net.Uri
-import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.google.gson.Gson
-import com.google.gson.JsonArray
 import com.sleepybee.singpli.PLBLApplication
 import com.sleepybee.singpli.R
 import com.sleepybee.singpli.databinding.ActivitySongListBinding
@@ -19,14 +15,13 @@ import com.sleepybee.singpli.item.KaraokeItem
 import com.sleepybee.singpli.item.SnippetItem
 import com.sleepybee.singpli.item.SongItem
 import com.sleepybee.singpli.ui.adapter.SongListAdapter
+import com.sleepybee.singpli.ui.common.BaseDataBindingActivity
 import com.sleepybee.singpli.utils.INTENT_KEY_SNIPPET
 import com.sleepybee.singpli.utils.INTENT_KEY_SONG_LIST
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import org.jsoup.Jsoup
 import org.jsoup.select.Elements
@@ -34,45 +29,44 @@ import timber.log.Timber
 import java.time.LocalDateTime
 import java.util.*
 
-class SongListActivity : AppCompatActivity() {
+@AndroidEntryPoint
+class SongListActivity : BaseDataBindingActivity<ActivitySongListBinding>(R.layout.activity_song_list), View.OnClickListener {
 
-    private var _binding: ActivitySongListBinding? = null
-    private val binding get() = _binding!!
-
-    private var searchViewModel: SearchViewModel? = null
+    private lateinit var searchViewModel: SearchViewModel
     private lateinit var snippetItem: SnippetItem
     private var songList: ArrayList<SongItem> = arrayListOf()
     private val songListAdapter = SongListAdapter()
 
     private var videoUrl: String = ""
-    var source: String = ""
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        _binding = ActivitySongListBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
+    override fun initBinding() {
         searchViewModel =
             ViewModelProvider(this)[SearchViewModel::class.java]
 
-        snippetItem = intent.getSerializableExtra(INTENT_KEY_SNIPPET, SnippetItem::class.java) as SnippetItem
+        snippetItem = intent.getSerializableExtra(INTENT_KEY_SNIPPET) as SnippetItem
         intent.getStringExtra(INTENT_KEY_SONG_LIST)?.let {
             songList =
                 ArrayList(Gson().fromJson(it, Array<SongItem>::class.java).toList())
+        }
+
+        runBlocking {
+            if (songList.isEmpty()) {
+                searchViewModel.getSnippetById(snippetItem.videoId).collect { snippet ->
+                    snippet?.let {
+                        it.songList?.let { list ->
+                            if (list.isNotEmpty()) {
+                                songList.addAll(list)
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         videoUrl = "https://www.youtube.com/watch?v=${snippetItem.videoId}"
         initSnippetView(snippetItem)
 
         binding.rvSongList.adapter = songListAdapter
-
-        binding.btnBackSongList.setOnClickListener {
-            finish()
-        }
-        binding.btnHeartSongList.setOnClickListener {
-            updateHearted(snippetItem)
-        }
 
         if (songList.isEmpty()) {
             fetchSongs()
@@ -84,6 +78,7 @@ class SongListActivity : AppCompatActivity() {
                 snippetItem, songList
             )
         }
+
     }
 
     private fun updateHearted(snippetItem: SnippetItem) {
@@ -97,7 +92,7 @@ class SongListActivity : AppCompatActivity() {
             withContext(Main) {
                 binding.btnHeartSongList.setBackgroundResource(if (isHeartedNew) R.drawable.ic_on_smallheart else R.drawable.ic_off_smallheart)
             }
-            searchViewModel?.updateHeart(snippetItem)
+            searchViewModel.updateHeart(snippetItem)
         }
     }
 
@@ -216,8 +211,8 @@ class SongListActivity : AppCompatActivity() {
     private fun updateRecentSnippet(snippetItem: SnippetItem, songList: List<SongItem>) {
         val today = LocalDateTime.now()
         snippetItem.viewDate = today.toString()
-        searchViewModel?.insertRecentSnippet(snippetItem)
-        searchViewModel?.insertSongs(songList)
+        searchViewModel.insertRecentSnippet(snippetItem)
+        searchViewModel.clearAndInsertSongs(snippetItem.videoId, songList)
     }
 
     private fun initSnippetView(snippetItem: SnippetItem) {
@@ -230,16 +225,6 @@ class SongListActivity : AppCompatActivity() {
                 .into(binding.ivThumbnailSongList)
             binding.btnHeartSongList.setBackgroundResource(if (isHearted) R.drawable.ic_on_smallheart else R.drawable.ic_off_smallheart)
 
-            binding.btnYoutubeSongList.setOnClickListener {
-                val videoUrl = "https://www.youtube.com/watch?v=${videoId}"
-                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(videoUrl))
-                binding.root.context.startActivity(browserIntent)
-            }
-        }
-
-        binding.btnYoutubeSongList.setOnClickListener {
-            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(videoUrl))
-            startActivity(browserIntent)
         }
     }
 
@@ -373,5 +358,18 @@ class SongListActivity : AppCompatActivity() {
         return char in '\u4E00'..'\u9FFF' || char in '\u3040'..'\u309F' || char in '\u30A0'..'\u30FF'
     }
 
+    override fun onClick(view: View) {
+        when(view.id) {
+            R.id.btn_youtube_song_list ->
+                videoUrl.let {
+                    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(it))
+                    startActivity(browserIntent)
+                }
+            R.id.btn_heart_song_list ->
+                updateHearted(snippetItem)
+            R.id.btn_back_song_list ->
+                finish()
+        }
+    }
 }
 

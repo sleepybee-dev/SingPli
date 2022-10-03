@@ -1,11 +1,14 @@
 package com.sleepybee.singpli.database
 
-import androidx.lifecycle.LiveData
 import com.sleepybee.singpli.BuildConfig
 import com.sleepybee.singpli.item.SnippetItem
 import com.sleepybee.singpli.item.SnippetWithSongs
 import com.sleepybee.singpli.item.SongItem
 import com.sleepybee.singpli.network.YTService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.flowOn
 import javax.inject.Inject
 
 class YTSnippetRepository @Inject constructor(
@@ -15,7 +18,7 @@ class YTSnippetRepository @Inject constructor(
 
 //    private val recentSnippetList: MutableLiveData<List<SnippetWithSongs>>
 
-    suspend fun searchVideoSnippets(keyword: String, nextPageToken: String?) =
+    fun searchVideoSnippets(keyword: String, nextPageToken: String?) =
         ytService.searchVideos(
             apiKey = BuildConfig.YOUTUBE_API_KEY,
             videoPart = "snippet",
@@ -32,20 +35,29 @@ class YTSnippetRepository @Inject constructor(
         snippetDao.insertSongs(songList)
     }
 
-    fun getHeartedSnippets(): LiveData<List<SnippetWithSongs>>? {
+    fun getHeartedSnippets(): Flow<List<SnippetWithSongs>> {
         return snippetDao.getHeartedSnippets()
+            .flowOn(Dispatchers.IO)
+            .conflate()
     }
 
-    fun getRecentSnippets(): LiveData<List<SnippetWithSongs>>? {
-        try {
-            return snippetDao.getRecentSnippets()
-        } catch (e: Exception) {
-
-        }
-        return null
+    fun getRecentSnippets(): Flow<List<SnippetWithSongs>> {
+        return snippetDao.getRecentSnippets()
+            .flowOn(Dispatchers.IO)
+            .conflate()
     }
 
     fun updateHeart(snippetItem: SnippetItem) {
         snippetDao.updateHeart(snippetItem)
+    }
+
+    fun getSnippetById(videoId: String): Flow<SnippetWithSongs?> {
+        return snippetDao.getSnippetById(videoId)
+            .flowOn(Dispatchers.IO)
+            .conflate()
+    }
+
+    fun deleteSnippetById(videoId: String) {
+        return snippetDao.deleteSongsById(videoId)
     }
 }

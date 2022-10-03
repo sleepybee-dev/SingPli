@@ -6,14 +6,10 @@ import android.view.KeyEvent
 import android.view.KeyEvent.KEYCODE_ENTER
 import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
-import android.widget.Toast
 import androidx.activity.addCallback
-import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.chip.Chip
 import com.google.gson.JsonObject
 import com.sleepybee.singpli.R
@@ -21,6 +17,7 @@ import com.sleepybee.singpli.databinding.FragmentSearchBinding
 import com.sleepybee.singpli.item.SnippetItem
 import com.sleepybee.singpli.ui.adapter.RecentListAdapter
 import com.sleepybee.singpli.ui.adapter.SnippetListAdapter
+import com.sleepybee.singpli.ui.common.BaseDataBindingFragment
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,29 +25,18 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @AndroidEntryPoint
-class SearchFragment : Fragment() {
+class SearchFragment : BaseDataBindingFragment<FragmentSearchBinding>(R.layout.fragment_search) {
 
-    private var _binding: FragmentSearchBinding? = null
-    private val binding get() = _binding!!
     private val snippetListAdapter = SnippetListAdapter()
     private val recentListAdapter = RecentListAdapter()
 
-    private var searchViewModel: SearchViewModel? = null
+    private val searchViewModel: SearchViewModel by viewModels()
     private var keyword = ""
     private var nextPageToken: String? = null
     private var isNew = true
     private var isLoading = true
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = FragmentSearchBinding.inflate(inflater, container, false)
-        val root: View = binding.root
-
-        searchViewModel =
-            ViewModelProvider(this)[SearchViewModel::class.java]
+    override fun initBinding() {
 
         binding.rvSearch.adapter = snippetListAdapter
         binding.includeEmptySearch.rvRecentSearchEmpty.adapter = recentListAdapter
@@ -59,17 +45,6 @@ class SearchFragment : Fragment() {
         binding.btnDeleteSearch.setOnClickListener {
             clearKeyword()
         }
-
-//        binding.rvSearch.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-//            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-//                super.onScrollStateChanged(recyclerView, newState)
-//                if (!isLoading && !recyclerView.canScrollVertically(1) && newState==RecyclerView.SCROLL_STATE_IDLE) {
-//                    isLoading = true
-//                    searchVideo(false, keyword)
-//                    Toast.makeText(activity, "CALL $keyword", Toast.LENGTH_SHORT).show()
-//                }
-//            }
-//        })
 
         binding.etSearch.setOnKeyListener { v, keyCode, event ->
             if (event.action == KeyEvent.ACTION_DOWN && keyCode == KEYCODE_ENTER) {
@@ -91,7 +66,7 @@ class SearchFragment : Fragment() {
                 activity?.onBackPressed()
             }
         }
-        return root
+
     }
 
     private fun clearKeyword() {
@@ -100,7 +75,7 @@ class SearchFragment : Fragment() {
         binding.etSearch.setText("")
         binding.btnDeleteSearch.visibility = View.GONE
         binding.includeEmptySearch.root.visibility = View.VISIBLE
-        searchViewModel?.clearSearchSnippets()
+        searchViewModel.clearSearchSnippets()
         binding.rvSearch.removeAllViewsInLayout()
         binding.rvSearch.visibility = View.GONE
     }
@@ -108,7 +83,7 @@ class SearchFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        searchViewModel?.getRecentSnippets()?.observe(viewLifecycleOwner, Observer {
+        searchViewModel.recentSnippets.observe(viewLifecycleOwner) {
             if (it.isEmpty()) {
                 binding.includeEmptySearch.tvRecentSearchEmpty.visibility = View.GONE
             } else {
@@ -116,12 +91,12 @@ class SearchFragment : Fragment() {
                 Timber.d("recent : %s", it.toString())
                 recentListAdapter.setSnippetList(it)
             }
-        })
+        }
 
         val chipGroup = binding.includeEmptySearch.chipGroupSearchEmpty
         val inflater = LayoutInflater.from(chipGroup.context)
 
-        searchViewModel?.getRecommendationKeywordList()?.map { chipKeyword ->
+        searchViewModel.getRecommendationKeywordList().map { chipKeyword ->
             val chip = inflater.inflate(R.layout.chip_keyword, chipGroup, false) as Chip
             chip.text = chipKeyword
             chip.setOnClickListener {
@@ -139,7 +114,7 @@ class SearchFragment : Fragment() {
             }
         }
 
-        searchViewModel?.getSearchSnippetJsonObject()?.observe(viewLifecycleOwner) {
+        searchViewModel.getSearchSnippetJsonObject().observe(viewLifecycleOwner) {
             binding.shimmerSearch.stopShimmer()
             binding.shimmerSearch.visibility = View.GONE
             if (it == null) {
@@ -173,7 +148,7 @@ class SearchFragment : Fragment() {
             binding.shimmerSearch.startShimmer()
         }
 
-        searchViewModel?.searchVideoSnippets(keyword, nextPageToken)
+        searchViewModel.searchVideoSnippets(keyword, nextPageToken)
     }
 
     private fun parseSongMeta(responseBody: JsonObject) {
@@ -211,12 +186,8 @@ class SearchFragment : Fragment() {
                 }
             }
         } catch (e: Exception) {
-            Timber.d("error : " + e.message)
+            Timber.d("error : %s", e.message)
         }
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
 }

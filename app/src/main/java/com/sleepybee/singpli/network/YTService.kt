@@ -1,10 +1,9 @@
 package com.sleepybee.singpli.network
 
 import com.google.gson.JsonObject
-import com.squareup.okhttp.ResponseBody
+import retrofit2.Call
 import retrofit2.http.GET
 import retrofit2.http.Query
-import retrofit2.Call
 
 /**
  * Created by leeseulbee on 2022/07/28.

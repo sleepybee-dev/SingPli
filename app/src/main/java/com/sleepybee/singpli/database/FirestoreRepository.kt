@@ -1,16 +1,16 @@
 package com.sleepybee.singpli.database
 
 import android.app.Application
-import androidx.lifecycle.LiveData
 import com.sleepybee.singpli.item.SnippetWithSongs
+import kotlinx.coroutines.flow.Flow
 
 class FirestoreRepository(application: Application) {
     private val snippetDao: SnippetDao
-    private val recentSnippetList: LiveData<List<SnippetWithSongs>>
+    private val recentSnippetList: Flow<List<SnippetWithSongs>>
 
     init {
-        var db = SingPliDatabase.getInstance(application)
-        snippetDao = db!!.snippetDao()
+        val db = SingPliDatabase.getInstance(application)
+        snippetDao = db.snippetDao()
         recentSnippetList = db.snippetDao().getRecentSnippets()
     }
 

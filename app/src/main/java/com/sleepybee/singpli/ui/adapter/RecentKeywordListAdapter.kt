@@ -1,13 +1,9 @@
 package com.sleepybee.singpli.ui.adapter
 
-import android.content.Context
-import android.content.Intent
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.sleepybee.singpli.databinding.ItemRecentKeywordBinding
-import com.sleepybee.singpli.item.SnippetItem
-import com.sleepybee.singpli.ui.search.SongListActivity
 
 class RecentKeywordListAdapter : RecyclerView.Adapter<RecentKeywordListViewHolder>() {
 

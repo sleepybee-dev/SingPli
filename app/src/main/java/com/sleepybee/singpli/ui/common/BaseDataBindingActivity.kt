@@ -2,11 +2,12 @@ package com.sleepybee.singpli.ui.common
 
 import android.os.Bundle
 import androidx.annotation.IdRes
+import androidx.annotation.LayoutRes
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 
 abstract class BaseDataBindingActivity<B : ViewDataBinding>
-    (@IdRes private val resId: Int) : BaseActivity() {
+    (@LayoutRes private val resId: Int) : BaseActivity() {
 
     protected lateinit var binding: B
 

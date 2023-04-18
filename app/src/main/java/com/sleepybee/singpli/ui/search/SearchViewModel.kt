@@ -2,6 +2,7 @@ package com.sleepybee.singpli.ui.search
 
 import androidx.lifecycle.*
 import com.google.gson.JsonObject
+import com.sleepybee.singpli.database.FirebaseRepository
 import com.sleepybee.singpli.database.YTSnippetRepository
 import com.sleepybee.singpli.item.SnippetItem
 import com.sleepybee.singpli.item.SnippetWithSongs
@@ -9,7 +10,6 @@ import com.sleepybee.singpli.item.SongItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -19,7 +19,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SearchViewModel @Inject constructor(
-    private val ytSnippetRepository: YTSnippetRepository
+    private val ytSnippetRepository: YTSnippetRepository,
+    private val firebaseRepository: FirebaseRepository
 ) : ViewModel() {
 
     val recentSnippets = ytSnippetRepository.getRecentSnippets().asLiveData()
@@ -87,8 +88,8 @@ class SearchViewModel @Inject constructor(
         return searchSnippetJsonObject
     }
 
-    fun getRecommendationKeywordList(): List<String> {
-        return recommendationKeyword
+    fun getRecommendationKeywordList(): MutableLiveData<List<String>> {
+        return firebaseRepository.keywordList
     }
 
     fun clearSearchSnippets() {

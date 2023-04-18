@@ -1,5 +1,6 @@
 package com.sleepybee.singpli.di
 
+import com.sleepybee.singpli.database.FirebaseRepository
 import com.sleepybee.singpli.database.SnippetDao
 import com.sleepybee.singpli.database.YTSnippetRepository
 import com.sleepybee.singpli.network.YTService
@@ -20,5 +21,12 @@ class RepositoryModule {
         snippetDao: SnippetDao
     ) : YTSnippetRepository {
         return YTSnippetRepository(ytService, snippetDao)
+    }
+
+    @Provides
+    @ViewModelScoped
+    fun provideFirebaseRepository(
+    ) : FirebaseRepository {
+        return FirebaseRepository()
     }
 }

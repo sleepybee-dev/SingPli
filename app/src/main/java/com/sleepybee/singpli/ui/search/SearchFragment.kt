@@ -96,21 +96,23 @@ class SearchFragment : BaseDataBindingFragment<FragmentSearchBinding>(R.layout.f
         val chipGroup = binding.includeEmptySearch.chipGroupSearchEmpty
         val inflater = LayoutInflater.from(chipGroup.context)
 
-        searchViewModel.getRecommendationKeywordList().map { chipKeyword ->
-            val chip = inflater.inflate(R.layout.chip_keyword, chipGroup, false) as Chip
-            chip.text = chipKeyword
-            chip.setOnClickListener {
-                val keywordNew = "$chipKeyword 플리"
-                binding.etSearch.setText(keywordNew)
-                searchVideo(true, keywordNew)
-                hideKeyboard(view)
-            }
-            chip
-        }?.let {
-            chipGroup.removeAllViews()
+        searchViewModel.getRecommendationKeywordList().observe(viewLifecycleOwner) {
+            it.map { chipKeyword ->
+                val chip = inflater.inflate(R.layout.chip_keyword, chipGroup, false) as Chip
+                chip.text = chipKeyword
+                chip.setOnClickListener {
+                    val keywordNew = "$chipKeyword 플리"
+                    binding.etSearch.setText(keywordNew)
+                    searchVideo(true, keywordNew)
+                    hideKeyboard(view)
+                }
+                chip
+            }?.let {
+                chipGroup.removeAllViews()
 
-            for (chip in it) {
-                chipGroup.addView(chip)
+                for (chip in it) {
+                    chipGroup.addView(chip)
+                }
             }
         }
 

@@ -2,7 +2,8 @@
     <string name="app_name">플리불러</string>
     <string name="title_rank">플리 랭킹</string>
     <string name="title_search">플리 검색</string>
-    <string name="title_starred">찜한 플리</string>
+    <string name="title_singlist">불러 리스트</string>
+    <string name="title_mypage">마이페이지</string>
     <string name="separator">/</string>
     <string name="info_song_list">🚩 유튜브 정책 상 최대 10개 음악을 가져옵니다.\n🚩 음악 정보가 포함되지 않은 비디오는 지원하지 않습니다.</string>
     <string name="popular_keyword">추천 키워드</string>

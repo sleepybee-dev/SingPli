@@ -1,4 +1,4 @@
-package com.sleepybee.singpli.ui.starred
+package com.sleepybee.singpli.ui.mypage
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData

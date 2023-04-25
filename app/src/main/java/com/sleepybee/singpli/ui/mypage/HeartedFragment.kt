@@ -1,9 +1,8 @@
-package com.sleepybee.singpli.ui.starred
+package com.sleepybee.singpli.ui.mypage
 
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Observer
 import com.sleepybee.singpli.R
 import com.sleepybee.singpli.databinding.FragmentHeartedBinding
 import com.sleepybee.singpli.ui.adapter.HeartedListAdapter

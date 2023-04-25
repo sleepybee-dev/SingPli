@@ -1,6 +1,10 @@
 package com.sleepybee.singpli.ui.search
 
 import androidx.lifecycle.*
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import com.google.firebase.remoteconfig.ktx.remoteConfig
+import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
 import com.google.gson.JsonObject
 import com.sleepybee.singpli.database.FirebaseRepository
 import com.sleepybee.singpli.database.YTSnippetRepository
@@ -25,12 +29,15 @@ class SearchViewModel @Inject constructor(
 
     val recentSnippets = ytSnippetRepository.getRecentSnippets().asLiveData()
 
-    private val recommendationKeyword =
-        listOf("노래방", "가을", "이별", "걸그룹", "남돌", "감성힙합", "뮤지컬 영화", "애니")
+    var recommendationKeyword =
+        listOf("노래방", "걸그룹", "남돌", "감성힙합", "뮤지컬 영화", "애니")
 
     private var searchSnippetJsonObject = MutableLiveData<JsonObject?>()
     private val ioDispatcher = Dispatchers.IO
 
+    init {
+        recommendationKeyword = firebaseRepository.getKeywordList()
+    }
     fun getSnippetById(videoId: String): Flow<SnippetWithSongs?> = flow {
         ytSnippetRepository.getSnippetById(videoId)
             .stateIn(

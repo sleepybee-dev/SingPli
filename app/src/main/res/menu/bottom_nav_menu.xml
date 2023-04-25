@@ -12,9 +12,13 @@
         android:title="@string/title_search" />
 
     <item
-        android:id="@+id/navigation_hearted"
+        android:id="@+id/navigation_singlist"
         android:icon="@drawable/ic_off_bigheart"
-        android:title="@string/title_starred" />
+        android:title="@string/title_singlist" />
 
+    <item
+        android:id="@+id/navigation_mypage"
+        android:icon="@drawable/ic_off_person"
+        android:title="@string/title_singlist" />
 
 </menu>
